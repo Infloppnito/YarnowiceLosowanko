@@ -1,0 +1,97 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yarnowskie losowanko</title>
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&family=Quicksand:wght@500&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Quicksand', sans-serif; background: #2c2c2c; color: #f8f8f8; padding: 40px; text-align: center; }
+    .admin-login-button { position: fixed; top: 20px; right: 160px; background-color: #ff9800; color: white; border: none; padding: 10px 18px; border-radius: 20px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 1000; }
+    .admin-login-button:hover { background-color: #ff5722; }
+    h1 { font-family: 'Comic Neue', cursive; font-size: 5em; background: linear-gradient(270deg, red, orange, yellow, green, blue, indigo, violet); background-size: 1400% 1400%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: rainbow 10s linear infinite; margin-bottom: 5px; word-break: break-word; overflow-wrap: break-word; }
+    @media (max-width: 600px) {
+      h1 { font-size: 2.8em; }
+    }
+    @keyframes rainbow { 0% {background-position: 0% 50%;} 50% {background-position: 100% 50%;} 100% {background-position: 0% 50%;} }
+    label, input, select, button { display: block; margin: 10px auto; font-size: 1.1em; }
+    input, select { padding: 10px; border-radius: 12px; border: none; width: 250px; background-color: #ffb84d; color: #fff; }
+    button { background-color: #ff9800; color: white; border: none; padding: 12px 24px; border-radius: 25px; cursor: pointer; transition: background-color 0.3s ease; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    button:hover { background-color: #ff5722; }
+    #wynik { margin-top: 30px; font-size: 1.5em; font-weight: bold; color: #fff; background-color: rgba(255, 255, 255, 0.1); display: inline-block; padding: 15px 30px; border-radius: 20px; border: 1px solid #ffcc00; }
+    .profilowe { width: 120px; height: 120px; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.4); margin: 20px auto; display: block; }
+    .sekcja { background: rgba(255, 255, 255, 0.05); border: 2px dashed #ffcc00; border-radius: 25px; padding: 25px; margin: 40px auto; width: 90%;  max-width: 500px; box-shadow: 0 6px 15px rgba(0,0,0,0.4); }
+    .confetti { position: fixed; top: 50%; left: 50%; pointer-events: none; z-index: 9999; }
+    .dot { position: absolute; width: 10px; height: 10px; border-radius: 50%; opacity: 0.8; animation: fly 1s ease-out forwards; }
+    @keyframes fly {
+      to {
+        transform: translate(calc(-50px + 100px * var(--x)), calc(-50px + 100px * var(--y)));
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="sekcja">
+    <h2>Wynik losowania</h2>
+    <p id="wynik"></p>
+    <button onclick="losuj('chłopiec', event)">🎲 Losuj imię chłopca</button>
+    <button onclick="losuj('dziewczynka', event)">🎲 Losuj imię dziewczynki</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-analytics.js";
+    import {
+      getDatabase,
+      ref,
+      get
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD2MVjX1COvJgH8AFW6jghmYNdkxQJ_jFI",
+      authDomain: "yarnowskielosowanko-e3478.firebaseapp.com",
+      databaseURL: "https://yarnowskielosowanko-e3478-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "yarnowskielosowanko-e3478",
+      storageBucket: "yarnowskielosowanko-e3478.appspot.com",
+      messagingSenderId: "1072252091255",
+      appId: "1:1072252091255:web:06a58600bbe364157aff72",
+      measurementId: "G-87DG7S6RW1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getDatabase(app);
+
+    window.losuj = async function (kat, event) {
+      const snapshot = await get(ref(db, kat));
+      if (!snapshot.exists()) {
+        document.getElementById('wynik').textContent = "Brak imion w tej kategorii.";
+        return;
+      }
+      const imiona = Object.values(snapshot.val()).map(obj => obj.imie);
+      const los = imiona[Math.floor(Math.random() * imiona.length)];
+      showConfetti(event);
+      document.getElementById('wynik').textContent = `🎉 Wylosowane imię (${kat}): ${los}`;
+    };
+
+    function showConfetti(event) {
+      for (let i = 0; i < 30; i++) {
+        const dot = document.createElement('div');
+        dot.classList.add('dot');
+        dot.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 70%)`;
+        dot.style.setProperty('--x', Math.random());
+        dot.style.setProperty('--y', Math.random());
+        dot.classList.add('confetti');
+        dot.style.left = event.clientX + 'px';
+        dot.style.top = event.clientY + 'px';
+        document.body.appendChild(dot);
+        setTimeout(() => {
+          dot.remove();
+        }, 1000);
+      }
+    }
+  </script>
+</body>
+</html>
